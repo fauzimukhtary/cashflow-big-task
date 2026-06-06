@@ -195,7 +195,7 @@ func TampilkanData(Tabel IuranBulanan, NMahasiswa int, LoopDate bool) {
 			fmt.Println("Preview data...")
 		}
 
-		fmt.Print("| ID |       Nama Mahasiswa       |                                 Tanggal\n")
+		fmt.Printf("| ID |       %-21v|%43v\n", "Nama Mahasiswa", "Tanggal")
 		fmt.Print("|    |                            |")
 
 		for i = Mulai; i <= Akhir; i++ {
