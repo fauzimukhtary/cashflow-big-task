@@ -65,10 +65,12 @@ func Program() {
 	for LoopInMainMenu {
 		Pilihan = 0
 		fmt.Println("Silakan pilih menu yang diinginkan:")
-		fmt.Println("|  1 | Tambah Data")
-		fmt.Println("|  2 | Tampilkan Tabel Iuran Kas")
-		fmt.Println("|  3 | Update Status Pembayaran")
-		fmt.Println("|  4 | Hapus Mahasiswa")
+		fmt.Println("| 1  | Tambah Data")
+		fmt.Println("| 2  | Tampilkan Tabel Iuran Kas")
+		fmt.Println("| 3  | Urutkan & Total Pembayaran")
+		fmt.Println("| 4  | Update Status Pembayaran")
+		fmt.Println("| 5  | Mahasiswa Belum Bayar")
+		fmt.Println("| 6  | Hapus Mahasiswa")
 		fmt.Println("| 99 | Keluar Aplikasi")
 		fmt.Println()
 
@@ -89,13 +91,28 @@ func Program() {
 				fmt.Println("============ Tabel Iuran Kas ============")
 				TampilkanData(IuranMaster, JumlahMahasiswa, true)
 			case 3:
+				fmt.Println("========== Urutkan & Total ===========")
+				MenuLaporan(&IuranMaster, JumlahMahasiswa)
+			case 4:
 				fmt.Println("============== Update  Kas ==============")
 				UpdateStatusBayar(&IuranMaster, JumlahMahasiswa)
-			case 4:
+			case 5:
+				fmt.Println("============= Belum Bayar ===============")
+				BelumBayar(IuranMaster, JumlahMahasiswa)
+			case 6:
 				fmt.Println("============== Hapus  Data ==============")
 				HapusData(&IuranMaster, &JumlahMahasiswa, &JumlahTerhapus)
 			case 99:
-				fmt.Println("Terima kasih telah menggunakan CashFlow!")
+				fmt.Println("+-----------------------------------------------------------------------------------+")
+				fmt.Println("|                                                                                   |")
+				fmt.Println("|  _____ _____ ____  ___ __  __     _     _  __     _     ____ ___ _   _     _      |")
+				fmt.Println("| |_   _| ____|  _ ||_ _|  |/  |   / |   | |/ /    / |   / ___|_ _| | | |   | |     |")
+				fmt.Println("|   | | |  _| | |_) || || ||/| |  / _ |  | ' /    / _ |  |___ || || |_| |   | |     |")
+				fmt.Println("|   | | | |___|  _ < | || |  | | / ___ | | . |   / ___ |  ___) | ||  _  |   |_|     |")
+				fmt.Println("|   |_| |_____|_| |_|___|_|  |_|/_/   |_||_||_| /_/   |_||____/___|_| |_|   (_)     |")
+				fmt.Println("|                                                                                   |")
+				fmt.Println("+-----------------------------------------------------------------------------------+")
+				fmt.Println("           Terima kasih telah menggunakan CashFlow - Sampai Jumpa!           ")
 				LoopInMainMenu = false
 			}
 
@@ -367,4 +384,159 @@ func CariBerdasarID(Tabel IuranBulanan, NMahasiswa, IDTarget int) int {
 	}
 
 	return IndeksDicari
+}
+
+/*
+* wlm
+ */
+
+func BelumBayar(Tabel IuranBulanan, NMahasiswa int) {
+	/* 	Prosedur untuk menampilkan daftar nama mahasiswa yang belum
+	 *	membayar iuran pada tanggal tertentu.
+	 *
+	 *	IS. Terdefinisi Tabel bertipe data IuranBulanan dan NMahasiswa
+	 *
+	 *	FS. Menampilkan daftar nama mahasiswa yang memiliki status "-----"
+	 *  pada tanggal yang diinputkan pengguna.
+	 */
+	var TanggalCek, i int
+	var Ketemu bool
+
+	if NMahasiswa == 0 {
+		fmt.Println("********* Database masih kosong *********")
+	} else {
+		fmt.Print("Masukkan tanggal yang ingin dicek (1-31): ")
+		fmt.Scan(&TanggalCek)
+		if TanggalCek < 1 || TanggalCek > HARI {
+			fmt.Println("Tanggal tidak valid (Gunakan rentang 1-31).")
+		} else {
+			fmt.Printf("\nMahasiswa yang BELUM BAYAR pada tanggal %d:\n", TanggalCek)
+			fmt.Println("-------------------------------------------")
+			Ketemu = false
+			for i = 0; i < NMahasiswa; i++ {
+				// Mengecek jika status masih "-----"
+				if Tabel.Tanggal[i][TanggalCek-1] == "-----" {
+					fmt.Printf("- [%d] %s\n", Tabel.ID[i], Tabel.Nama[i])
+					Ketemu = true
+				}
+			}
+
+			if !Ketemu {
+				fmt.Println("Hebat! Semua mahasiswa sudah bayar pada tanggal ini.")
+			}
+			fmt.Println("-------------------------------------------")
+		}
+	}
+}
+
+func HitungTotalBayar(Data TanggalBayar) int {
+	/*	Fungsi untuk menghitung berapa kali status "LUNAS" muncul
+	 *	dalam array TanggalBayar milik seorang mahasiswa.
+	 */
+	var count, i int
+	for i = 0; i < HARI; i++ {
+		if Data[i] == "LUNAS" {
+			count++
+		}
+	}
+	return count
+}
+
+func MenuLaporan(Tabel *IuranBulanan, NMahasiswa int) {
+	/* 	Prosedur untuk mengurutkan data mahasiswa berdasarkan total pembayaran.
+	 *	Jika total pembayaran sama, maka diurutkan berdasarkan ID terkecil.
+	 *	Menggunakan algoritma SELECTION SORT sesuai modul dosen.
+	 *
+	 *	IS. Terdefinisi Tabel bertipe IuranBulanan dan NMahasiswa.
+	 *
+	 *	FS. Tabel terurut (Ascending/Descending) berdasarkan total bayar.
+	 *	    Jika ada total yang sama, ID terkecil akan diutamakan.
+	 *	    Hasil akhir tercetak di layar.
+	 */
+	var pilihan, i, j, idx_ekstrim int
+	var tID int
+	var tNama string
+	var tTanggal TanggalBayar
+
+	if NMahasiswa == 0 {
+		fmt.Println("********* Database masih kosong *********")
+		return
+	}
+
+	fmt.Println("Pilih urutan tampilan:")
+	fmt.Println("1. Total Bayar Terbanyak ke Terkecil (Descending)")
+	fmt.Println("2. Total Bayar Terkecil ke Terbanyak (Ascending)")
+	fmt.Print("Pilihan Anda: ")
+	fmt.Scan(&pilihan)
+
+	if pilihan != 1 && pilihan != 2 {
+		fmt.Println("Pilihan tidak valid.")
+		return
+	}
+
+	// ALGORITMA SELECTION SORT SESUAI MODUL
+	i = 1
+	for i <= NMahasiswa-1 {
+		idx_ekstrim = i - 1
+		j = i
+		for j < NMahasiswa {
+			totalJ := HitungTotalBayar(Tabel.Tanggal[j])
+			totalEkstrim := HitungTotalBayar(Tabel.Tanggal[idx_ekstrim])
+
+			if pilihan == 1 {
+				// Descending: Cari total yang lebih besar
+				if totalEkstrim < totalJ {
+					idx_ekstrim = j
+				} else if totalEkstrim == totalJ {
+					// Jika TOTAL SAMA, pilih yang ID-nya LEBIH KECIL
+					if Tabel.ID[idx_ekstrim] > Tabel.ID[j] {
+						idx_ekstrim = j
+					}
+				}
+			} else {
+				// Ascending: Cari total yang lebih kecil
+				if totalEkstrim > totalJ {
+					idx_ekstrim = j
+				} else if totalEkstrim == totalJ {
+					// Jika TOTAL SAMA, pilih yang ID-nya LEBIH KECIL
+					if Tabel.ID[idx_ekstrim] > Tabel.ID[j] {
+						idx_ekstrim = j
+					}
+				}
+			}
+			j = j + 1
+		}
+
+		// Proses Pertukaran (Swap) semua field agar data tetap sinkron
+		tID = Tabel.ID[idx_ekstrim]
+		Tabel.ID[idx_ekstrim] = Tabel.ID[i-1]
+		Tabel.ID[i-1] = tID
+
+		tNama = Tabel.Nama[idx_ekstrim]
+		Tabel.Nama[idx_ekstrim] = Tabel.Nama[i-1]
+		Tabel.Nama[i-1] = tNama
+
+		tTanggal = Tabel.Tanggal[idx_ekstrim]
+		Tabel.Tanggal[idx_ekstrim] = Tabel.Tanggal[i-1]
+		Tabel.Tanggal[i-1] = tTanggal
+
+		i = i + 1
+	}
+
+	// TAMPILKAN HASIL
+	if pilihan == 1 {
+		fmt.Println("\n--- Laporan: Terbanyak ke Terkecil (Tie-breaker: ID Kecil) ---")
+	} else {
+		fmt.Println("\n--- Laporan: Terkecil ke Terbanyak (Tie-breaker: ID Kecil) ---")
+	}
+
+	fmt.Printf("| %-3v | %-30v | %-12v |\n", "ID", "Nama Mahasiswa", "Total Bayar")
+	fmt.Println("--------------------------------------------")
+	for i = 0; i < NMahasiswa; i++ {
+		fmt.Printf("| %-3d | %-30s | %-12d |\n",
+			Tabel.ID[i],
+			Tabel.Nama[i],
+			HitungTotalBayar(Tabel.Tanggal[i]),
+		)
+	}
 }
