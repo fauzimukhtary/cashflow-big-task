@@ -1,3 +1,12 @@
+// FUNCTION
+// PROCEDURE
+// RECURSIVE
+// FIND MIN/MAX
+// SEQUENTIAL SEARCH
+// BINARY SEARCH ✔
+// SELECTION SORT ✔
+// INSERTION SORT
+
 package main
 
 import "fmt"
@@ -5,17 +14,15 @@ import "fmt"
 const NMAX int = 999
 const HARI int = 31
 
-type TanggalBayar [HARI]string
+type ArrTanggal [HARI]string
 
-type ArrNamaMahasiswa [NMAX]string
-type ArrID [NMAX]int
-type ArrTanggal [NMAX]TanggalBayar
-
-type IuranBulanan struct {
-	ID      ArrID
-	Nama    ArrNamaMahasiswa
+type DataIuran struct {
+	ID      int
+	Nama    string
 	Tanggal ArrTanggal
 }
+
+type IuranBulanan [NMAX]DataIuran
 
 func main() {
 	MainMenuDisplay()
@@ -58,19 +65,23 @@ func Program() {
 	var JumlahMahasiswa, JumlahTerhapus int
 	var LoopInMainMenu, LoopInMenu bool
 	var Pilihan int
+	var SortedByID bool
+	var NominalKas int
 
 	LoopInMainMenu = true
 	JumlahMahasiswa = 0
+	SortedByID = true
 
 	for LoopInMainMenu {
 		Pilihan = 0
 		fmt.Println("Silakan pilih menu yang diinginkan:")
 		fmt.Println("| 1  | Tambah Data")
 		fmt.Println("| 2  | Tampilkan Tabel Iuran Kas")
-		fmt.Println("| 3  | Urutkan & Total Pembayaran")
-		fmt.Println("| 4  | Update Status Pembayaran")
-		fmt.Println("| 5  | Mahasiswa Belum Bayar")
+		fmt.Println("| 3  | Update Status Pembayaran")
+		fmt.Println("| 4  | Urutkan & Total Pembayaran")
+		fmt.Println("| 5  | Status Bayar Per Tanggal")
 		fmt.Println("| 6  | Hapus Mahasiswa")
+		fmt.Println("| 7  | Ubah Nominal Kas")
 		fmt.Println("| 99 | Keluar Aplikasi")
 		fmt.Println()
 
@@ -91,17 +102,22 @@ func Program() {
 				fmt.Println("============ Tabel Iuran Kas ============")
 				TampilkanData(IuranMaster, JumlahMahasiswa, true)
 			case 3:
-				fmt.Println("========== Urutkan & Total ===========")
-				MenuLaporan(&IuranMaster, JumlahMahasiswa)
-			case 4:
 				fmt.Println("============== Update  Kas ==============")
 				UpdateStatusBayar(&IuranMaster, JumlahMahasiswa)
+			case 4:
+				fmt.Println("============== Urutkan Data ==============")
+				UrutkanLaporanByPembayaran(IuranMaster, JumlahMahasiswa, &SortedByID, NominalKas)
 			case 5:
-				fmt.Println("============= Belum Bayar ===============")
-				BelumBayar(IuranMaster, JumlahMahasiswa)
+				fmt.Println("============== Belum Bayar ==============")
+				BelumBayarPerTanggal(IuranMaster, JumlahMahasiswa)
 			case 6:
 				fmt.Println("============== Hapus  Data ==============")
 				HapusData(&IuranMaster, &JumlahMahasiswa, &JumlahTerhapus)
+			case 7:
+				fmt.Println("=========== Ubah Nominal Kas ============")
+				fmt.Print("Masukkan nominal dalam rupiah: ")
+				fmt.Scan(&NominalKas)
+				fmt.Println("Berhasil update nominal")
 			case 99:
 				fmt.Println("+-----------------------------------------------------------------------------------+")
 				fmt.Println("|                                                                                   |")
@@ -112,7 +128,7 @@ func Program() {
 				fmt.Println("|   |_| |_____|_| |_|___|_|  |_|/_/   |_||_||_| /_/   |_||____/___|_| |_|   (_)     |")
 				fmt.Println("|                                                                                   |")
 				fmt.Println("+-----------------------------------------------------------------------------------+")
-				fmt.Println("           Terima kasih telah menggunakan CashFlow - Sampai Jumpa!           ")
+				fmt.Println("           Terima kasih telah menggunakan CashFlow - Sampai Jumpa!")
 				LoopInMainMenu = false
 			}
 
@@ -140,12 +156,11 @@ func TambahData(Tabel *IuranBulanan, NMahasiswa *int, NTerhapus int) {
 	var TMPNama string
 
 	fmt.Print("Masukkan Nama Mahasiswa Baru (Tanpa Spasi): ")
-	fmt.Scan(&TMPNama)
+	fmt.Scan(&Tabel[*NMahasiswa].Nama)
 
-	Tabel.Nama[*NMahasiswa] = TMPNama
-	Tabel.ID[*NMahasiswa] = *NMahasiswa + NTerhapus + 1
+	Tabel[*NMahasiswa].ID = *NMahasiswa + NTerhapus + 1
 	for i = 0; i < HARI; i++ {
-		Tabel.Tanggal[*NMahasiswa][i] = "-----"
+		Tabel[*NMahasiswa].Tanggal[i] = "-----"
 	}
 	*NMahasiswa++
 
@@ -220,9 +235,9 @@ func TampilkanData(Tabel IuranBulanan, NMahasiswa int, LoopDate bool) {
 		}
 
 		for i = 0; i < NMahasiswa; i++ {
-			fmt.Printf("\n| %-2d | %-26v |", Tabel.ID[i], Tabel.Nama[i])
+			fmt.Printf("\n| %-2d | %-26v |", Tabel[i].ID, Tabel[i].Nama)
 			for j = Mulai - 1; j <= Akhir-1; j++ {
-				fmt.Printf(" %-5v |", Tabel.Tanggal[i][j])
+				fmt.Printf(" %-5v |", Tabel[i].Tanggal[j])
 			}
 		}
 		fmt.Println()
@@ -259,8 +274,8 @@ func UpdateStatusBayar(Tabel *IuranBulanan, NMahasiswa int) {
 		} else {
 			fmt.Printf(
 				"Anda akan mengupdate data untuk: %v dengan ID %d \n\n",
-				Tabel.Nama[IdxOfID],
-				Tabel.ID[IdxOfID],
+				Tabel[IdxOfID].Nama,
+				Tabel[IdxOfID].ID,
 			)
 			fmt.Println("Ketikkan tanggal-tanggal yang ingin diupdate menjadi LUNAS")
 			fmt.Println("Note: Masukkan angka-angka yang dipisahkan oleh spasi")
@@ -271,7 +286,7 @@ func UpdateStatusBayar(Tabel *IuranBulanan, NMahasiswa int) {
 			fmt.Scan(&Date)
 
 			for Date > 0 && Date <= HARI {
-				Tabel.Tanggal[IdxOfID][Date-1] = "LUNAS"
+				Tabel[IdxOfID].Tanggal[Date-1] = "LUNAS"
 				fmt.Scan(&Date)
 			}
 
@@ -306,7 +321,7 @@ func HapusData(Tabel *IuranBulanan, NMahasiswa, NTerhapus *int) {
 	} else {
 		fmt.Print("| ID |       Nama Mahasiswa       |\n")
 		for i = 0; i < *NMahasiswa; i++ {
-			fmt.Printf("| %-2d | %-26v |\n", Tabel.ID[i], Tabel.Nama[i])
+			fmt.Printf("| %-2d | %-26v |\n", Tabel[i].ID, Tabel[i].Nama)
 		}
 
 		fmt.Print("\nPilih ID yang akan dihapus: ")
@@ -323,8 +338,8 @@ func HapusData(Tabel *IuranBulanan, NMahasiswa, NTerhapus *int) {
 			// konfirmasi penghapusan
 			fmt.Printf(
 				"\nAnda akan menghapus mahasiswa dengan nama: %v dengan ID %d",
-				Tabel.Nama[IdxOfID],
-				Tabel.ID[IdxOfID],
+				Tabel[IdxOfID].Nama,
+				Tabel[IdxOfID].ID,
 			)
 
 			Loop = true
@@ -343,10 +358,10 @@ func HapusData(Tabel *IuranBulanan, NMahasiswa, NTerhapus *int) {
 			switch ConfirmHapus {
 			case 'y', 'Y':
 				for i = IdxOfID; i < *NMahasiswa; i++ {
-					Tabel.ID[i] = Tabel.ID[i+1]
-					Tabel.Nama[i] = Tabel.Nama[i+1]
+					Tabel[i].ID = Tabel[i+1].ID
+					Tabel[i].Nama = Tabel[i+1].Nama
 					for j = 0; j < HARI; j++ {
-						Tabel.Tanggal[i][j] = Tabel.Tanggal[i+1][j]
+						Tabel[i].Tanggal[j] = Tabel[i+1].Tanggal[j]
 					}
 				}
 				fmt.Println("Data berhasil dihapus")
@@ -374,9 +389,9 @@ func CariBerdasarID(Tabel IuranBulanan, NMahasiswa, IDTarget int) int {
 
 	for BatasKiri <= BatasKanan && IndeksDicari == -1 {
 		Tengah = (BatasKiri + BatasKanan) / 2
-		if IDTarget == Tabel.ID[Tengah] {
+		if IDTarget == Tabel[Tengah].ID {
 			IndeksDicari = Tengah
-		} else if IDTarget < Tabel.ID[Tengah] {
+		} else if IDTarget < Tabel[Tengah].ID {
 			BatasKanan = Tengah - 1
 		} else {
 			BatasKiri = Tengah + 1
@@ -387,10 +402,11 @@ func CariBerdasarID(Tabel IuranBulanan, NMahasiswa, IDTarget int) int {
 }
 
 /*
-* wlm
+ * wlm
  */
 
-func BelumBayar(Tabel IuranBulanan, NMahasiswa int) {
+func BelumBayarPerTanggal(Tabel IuranBulanan, NMahasiswa int) {
+
 	/* 	Prosedur untuk menampilkan daftar nama mahasiswa yang belum
 	 *	membayar iuran pada tanggal tertentu.
 	 *
@@ -399,50 +415,82 @@ func BelumBayar(Tabel IuranBulanan, NMahasiswa int) {
 	 *	FS. Menampilkan daftar nama mahasiswa yang memiliki status "-----"
 	 *  pada tanggal yang diinputkan pengguna.
 	 */
-	var TanggalCek, i int
+
+	var Date, i int
 	var Ketemu bool
+	var LoopInDateChoice bool
 
 	if NMahasiswa == 0 {
 		fmt.Println("********* Database masih kosong *********")
 	} else {
-		fmt.Print("Masukkan tanggal yang ingin dicek (1-31): ")
-		fmt.Scan(&TanggalCek)
-		if TanggalCek < 1 || TanggalCek > HARI {
-			fmt.Println("Tanggal tidak valid (Gunakan rentang 1-31).")
-		} else {
-			fmt.Printf("\nMahasiswa yang BELUM BAYAR pada tanggal %d:\n", TanggalCek)
-			fmt.Println("-------------------------------------------")
-			Ketemu = false
-			for i = 0; i < NMahasiswa; i++ {
-				// Mengecek jika status masih "-----"
-				if Tabel.Tanggal[i][TanggalCek-1] == "-----" {
-					fmt.Printf("- [%d] %s\n", Tabel.ID[i], Tabel.Nama[i])
-					Ketemu = true
-				}
-			}
+		LoopInDateChoice = true
 
-			if !Ketemu {
-				fmt.Println("Hebat! Semua mahasiswa sudah bayar pada tanggal ini.")
+		for LoopInDateChoice {
+			fmt.Print("Masukkan tanggal yang ingin dicek (1-31): ")
+			fmt.Scan(&Date)
+			if Date < 1 || Date > HARI {
+				fmt.Print("Tanggal tidak valid (Gunakan rentang 1-31).\n\n")
+			} else {
+				LoopInDateChoice = false
 			}
-			fmt.Println("-------------------------------------------")
 		}
+
+		fmt.Printf("\nMahasiswa yang BELUM BAYAR pada tanggal %d:\n", Date)
+		fmt.Println("-------------------------------------------")
+
+		// Mencetak daftar mahasiswa yg belum bayar pada tanggal tersebut
+		Ketemu = false
+		for i = 0; i < NMahasiswa; i++ {
+			// Mengecek jika status masih "-----"
+			if Tabel[i].Tanggal[Date-1] == "-----" {
+				fmt.Printf("- [%d] %s\n", Tabel[i].ID, Tabel[i].Nama)
+				Ketemu = true
+			}
+		}
+
+		if !Ketemu {
+			fmt.Println("Hebat! Semua mahasiswa sudah bayar pada tanggal ini.")
+		}
+		fmt.Println("-------------------------------------------")
 	}
 }
 
-func HitungTotalBayar(Data TanggalBayar) int {
-	/*	Fungsi untuk menghitung berapa kali status "LUNAS" muncul
+func HitungTotalBayar(Data ArrTanggal) int {
+
+	/*	Fungsi utama untuk menghitung berapa kali status "LUNAS" muncul
+	 *	dalam array TanggalBayar milik seorang mahasiswa.
+	 *  Memanggil fungsi rekursif lain
+	 */
+
+	var i int
+
+	i = 0
+	return HitungTotalBayarRecursive(Data, i)
+}
+
+func HitungTotalBayarRecursive(Date ArrTanggal, i int) int {
+
+	/*	Fungsi secara rekursif menghitung berapa kali status "LUNAS" muncul
 	 *	dalam array TanggalBayar milik seorang mahasiswa.
 	 */
-	var count, i int
-	for i = 0; i < HARI; i++ {
-		if Data[i] == "LUNAS" {
-			count++
+
+	if i == HARI-1 {
+		if Date[i] == "LUNAS" {
+			return 1
+		} else {
+			return 0
+		}
+	} else {
+		if Date[i] == "LUNAS" {
+			return 1 + HitungTotalBayarRecursive(Date, i+1)
+		} else {
+			return HitungTotalBayarRecursive(Date, i+1)
 		}
 	}
-	return count
 }
 
-func MenuLaporan(Tabel *IuranBulanan, NMahasiswa int) {
+func UrutkanLaporanByPembayaran(Tabel IuranBulanan, NMahasiswa int, SortedByID *bool, Nominal int) {
+
 	/* 	Prosedur untuk mengurutkan data mahasiswa berdasarkan total pembayaran.
 	 *	Jika total pembayaran sama, maka diurutkan berdasarkan ID terkecil.
 	 *	Menggunakan algoritma SELECTION SORT sesuai modul dosen.
@@ -453,90 +501,150 @@ func MenuLaporan(Tabel *IuranBulanan, NMahasiswa int) {
 	 *	    Jika ada total yang sama, ID terkecil akan diutamakan.
 	 *	    Hasil akhir tercetak di layar.
 	 */
-	var pilihan, i, j, idx_ekstrim int
-	var tID int
-	var tNama string
-	var tTanggal TanggalBayar
+
+	var pilihan, i int
+	var LoopInAscDesc bool
 
 	if NMahasiswa == 0 {
 		fmt.Println("********* Database masih kosong *********")
-		return
-	}
+	} else if Nominal == 0 {
+		fmt.Println("****** Nominal Kas Belum Di-Setting *****")
+	} else {
 
-	fmt.Println("Pilih urutan tampilan:")
-	fmt.Println("1. Total Bayar Terbanyak ke Terkecil (Descending)")
-	fmt.Println("2. Total Bayar Terkecil ke Terbanyak (Ascending)")
-	fmt.Print("Pilihan Anda: ")
-	fmt.Scan(&pilihan)
+		fmt.Println("Pilih urutan tampilan:")
+		fmt.Println("1. Total Bayar Terkecil ke Terbanyak (Ascending)")
+		fmt.Println("2. Total Bayar Terbanyak ke Terkecil (Descending)")
 
-	if pilihan != 1 && pilihan != 2 {
-		fmt.Println("Pilihan tidak valid.")
-		return
-	}
+		LoopInAscDesc = true
 
-	// ALGORITMA SELECTION SORT SESUAI MODUL
-	i = 1
-	for i <= NMahasiswa-1 {
-		idx_ekstrim = i - 1
-		j = i
-		for j < NMahasiswa {
-			totalJ := HitungTotalBayar(Tabel.Tanggal[j])
-			totalEkstrim := HitungTotalBayar(Tabel.Tanggal[idx_ekstrim])
+		for LoopInAscDesc {
+			fmt.Printf("\nPilihan Anda: ")
+			fmt.Scan(&pilihan)
 
-			if pilihan == 1 {
-				// Descending: Cari total yang lebih besar
-				if totalEkstrim < totalJ {
-					idx_ekstrim = j
-				} else if totalEkstrim == totalJ {
-					// Jika TOTAL SAMA, pilih yang ID-nya LEBIH KECIL
-					if Tabel.ID[idx_ekstrim] > Tabel.ID[j] {
-						idx_ekstrim = j
-					}
-				}
+			if pilihan != 1 && pilihan != 2 {
+				fmt.Println("Pilihan tidak valid.")
 			} else {
-				// Ascending: Cari total yang lebih kecil
-				if totalEkstrim > totalJ {
-					idx_ekstrim = j
-				} else if totalEkstrim == totalJ {
-					// Jika TOTAL SAMA, pilih yang ID-nya LEBIH KECIL
-					if Tabel.ID[idx_ekstrim] > Tabel.ID[j] {
-						idx_ekstrim = j
-					}
-				}
+				LoopInAscDesc = false
 			}
-			j = j + 1
 		}
 
-		// Proses Pertukaran (Swap) semua field agar data tetap sinkron
-		tID = Tabel.ID[idx_ekstrim]
-		Tabel.ID[idx_ekstrim] = Tabel.ID[i-1]
-		Tabel.ID[i-1] = tID
+		SelectionSortByPembayaran(&Tabel, NMahasiswa, pilihan)
+		*SortedByID = false
 
-		tNama = Tabel.Nama[idx_ekstrim]
-		Tabel.Nama[idx_ekstrim] = Tabel.Nama[i-1]
-		Tabel.Nama[i-1] = tNama
+		// TAMPILKAN HASIL
+		if pilihan == 1 {
+			fmt.Println("**** Laporan:  Terkecil ke Terbanyak ****")
+		} else {
+			fmt.Println("**** Laporan:  Terbanyak ke Terkecil ****")
+		}
 
-		tTanggal = Tabel.Tanggal[idx_ekstrim]
-		Tabel.Tanggal[idx_ekstrim] = Tabel.Tanggal[i-1]
-		Tabel.Tanggal[i-1] = tTanggal
+		fmt.Printf("| %-3v | %-30v | %-12v |\n", "ID", "Nama Mahasiswa", "Total Bayar")
+		fmt.Println("--------------------------------------------")
 
-		i = i + 1
+		// Cetak Hasil
+		for i = 0; i < NMahasiswa; i++ {
+			fmt.Printf("| %-3d | %-30s | %-12d |\n",
+				Tabel[i].ID,
+				Tabel[i].Nama,
+				Nominal*HitungTotalBayar(Tabel[i].Tanggal),
+			)
+		}
+
 	}
 
-	// TAMPILKAN HASIL
-	if pilihan == 1 {
-		fmt.Println("\n--- Laporan: Terbanyak ke Terkecil (Tie-breaker: ID Kecil) ---")
+}
+
+func SelectionSortByPembayaran(Tabel *IuranBulanan, NMahasiswa int, choice int) {
+
+	/*
+	 *
+	 */
+
+	var i, j, Min, Max int
+	var TotalJ, TotalMin, TotalMax int
+	var temp DataIuran
+
+	if choice == 1 {
+
+		for i = 0; i < NMahasiswa-1; i++ {
+
+			Min = i
+			TotalMin = HitungTotalBayar(Tabel[Min].Tanggal) // hitung berapa kali mhs pada indeks Min membayar
+
+			for j = i + 1; j < NMahasiswa; j++ {
+
+				TotalJ = HitungTotalBayar(Tabel[j].Tanggal) // hitung berapa kali mhs pada indeks j membayar
+
+				if TotalJ < TotalMin {
+
+					Min = j
+					TotalMin = HitungTotalBayar(Tabel[Min].Tanggal)
+
+				} else if TotalMin == TotalJ && Tabel[j].ID < Tabel[Min].ID { // Bila Total Sama, ID Yg lebih kecil dipilih
+
+					Min = j
+					TotalMin = HitungTotalBayar(Tabel[Min].Tanggal)
+
+				}
+
+			}
+
+			// Swapping
+			temp = Tabel[Min]
+			Tabel[Min] = Tabel[i]
+			Tabel[i] = temp
+		}
+
 	} else {
-		fmt.Println("\n--- Laporan: Terkecil ke Terbanyak (Tie-breaker: ID Kecil) ---")
+
+		for i = 0; i < NMahasiswa-1; i++ {
+
+			Max = i
+			TotalMax = HitungTotalBayar(Tabel[Max].Tanggal) // hitung berapa kali mhs pada indeks Max membayar
+
+			for j = i + 1; j < NMahasiswa; j++ {
+
+				TotalJ = HitungTotalBayar(Tabel[j].Tanggal) // hitung berapa kali mhs pada indeks j membayar
+
+				if TotalJ < TotalMax {
+
+					Max = j
+					TotalMax = HitungTotalBayar(Tabel[Max].Tanggal)
+
+				} else if TotalMax == TotalJ && Tabel[j].ID < Tabel[Max].ID { // Bila Total Sama, ID Yg lebih kecil dipilih
+
+					Max = j
+					TotalMax = HitungTotalBayar(Tabel[Max].Tanggal)
+
+				}
+
+			}
+
+			// Swapping
+			temp = Tabel[Max]
+			Tabel[Max] = Tabel[i]
+			Tabel[i] = temp
+		}
+
 	}
 
-	fmt.Printf("| %-3v | %-30v | %-12v |\n", "ID", "Nama Mahasiswa", "Total Bayar")
-	fmt.Println("--------------------------------------------")
-	for i = 0; i < NMahasiswa; i++ {
-		fmt.Printf("| %-3d | %-30s | %-12d |\n",
-			Tabel.ID[i],
-			Tabel.Nama[i],
-			HitungTotalBayar(Tabel.Tanggal[i]),
-		)
+}
+
+func InsertionSortByID(Tabel *IuranBulanan, NMahasiswa int) {
+	var i, j int
+	var temp DataIuran
+
+	for i = 1; i < NMahasiswa; i++ {
+		j = i
+		temp = Tabel[j]
+		for j > 1 && temp.ID < Tabel[j-1].ID {
+			Tabel[j] = Tabel[j-1]
+			j--
+		}
+		Tabel[j] = temp
 	}
+}
+
+func LaporanKeuangan(Tabel *IuranBulanan, NMahasiswa int) {
+
 }
