@@ -299,6 +299,8 @@ func HapusData(Tabel *IuranBulanan, NMahasiswa, NTerhapus *int) {
 
 	/*	Prosedur untuk menampilkan tabel iuran yang memperbolehkan
 	 *	pengguna untuk menghapus Data dari Tabel berdasarkan ID
+	 *	Ketentuan: ID yang telah dihapus tidak bisa digunakan
+	 *	lagi pada penambahan data selanjutnya.
 	 *
 	 *	IS.	Terdefinisi Tabel bertipe data IuranBulanan,
 	 *		NMahasiswa (jumlah mahasiswa yang ada di tabel),
