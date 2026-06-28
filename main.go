@@ -792,7 +792,6 @@ func LaporanKeuangan(Tabel IuranBulanan, NMahasiswa int, Nominal int) {
 	var tgl int
 	var JumlahLunas int
 	var TotalKeseluruhan int
-	var TglMin, TglMax int
 
 	if NMahasiswa == 0 {
 		fmt.Println("********* Database masih kosong *********")
@@ -804,8 +803,6 @@ func LaporanKeuangan(Tabel IuranBulanan, NMahasiswa int, Nominal int) {
 		fmt.Print("-----------------------------------------\n")
 
 		TotalKeseluruhan = 0
-		TglMax = 1
-		TglMin = 1
 
 		for tgl = 1; tgl <= HARI; tgl++ {
 			JumlahLunas = JumlahLunasPerTanggal(Tabel, NMahasiswa, tgl)
