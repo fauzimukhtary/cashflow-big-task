@@ -1,12 +1,3 @@
-// FUNCTION
-// PROCEDURE
-// RECURSIVE
-// FIND MIN/MAX
-// SEQUENTIAL SEARCH
-// BINARY SEARCH ✔
-// SELECTION SORT ✔
-// INSERTION SORT
-
 package main
 
 import "fmt"
@@ -31,8 +22,7 @@ func main() {
 
 func MainMenuDisplay() {
 
-	/*
-	 *	Prosedur berisi output untuk dekorasi pada menu utama
+	/*	Prosedur berisi output untuk dekorasi pada menu utama
 	 *	IS.	-
 	 *
 	 *	FS.	Tercetak tulisan "CASHFLOW" dengan dekorasi
@@ -73,7 +63,7 @@ func Program() {
 	SortedByID = true
 
 	for LoopInMainMenu {
-		Pilihan = 0
+		Pilihan = 99
 		fmt.Println("Silakan pilih menu yang diinginkan:")
 		fmt.Println("| 1  | Tambah Data")
 		fmt.Println("| 2  | Tampilkan Tabel Iuran Kas")
@@ -82,7 +72,9 @@ func Program() {
 		fmt.Println("| 5  | Status Bayar Per Tanggal")
 		fmt.Println("| 6  | Hapus Mahasiswa")
 		fmt.Println("| 7  | Ubah Nominal Kas")
-		fmt.Println("| 99 | Keluar Aplikasi")
+		fmt.Println("| 8  | Cari (ID/Nama)")
+		fmt.Println("| 9  | Laporan Keuangan (Per Tanggal & Keseluruhan)")
+		fmt.Println("| 0  | Keluar Aplikasi")
 		fmt.Println()
 
 		LoopInMenu = true
@@ -118,7 +110,13 @@ func Program() {
 				fmt.Print("Masukkan nominal dalam rupiah: ")
 				fmt.Scan(&NominalKas)
 				fmt.Println("Berhasil update nominal")
-			case 99:
+			case 8:
+				fmt.Println("=============== Pencarian ===============")
+				MenuCariMahasiswa(IuranMaster, JumlahMahasiswa, NominalKas)
+			case 9:
+				fmt.Println("=========== Laporan Total Kas ===========")
+				LaporanKeuangan(IuranMaster, JumlahMahasiswa, NominalKas)
+			case 0:
 				fmt.Println("+-----------------------------------------------------------------------------------+")
 				fmt.Println("|                                                                                   |")
 				fmt.Println("|  _____ _____ ____  ___ __  __     _     _  __     _     ____ ___ _   _     _      |")
@@ -374,6 +372,70 @@ func HapusData(Tabel *IuranBulanan, NMahasiswa, NTerhapus *int) {
 	}
 }
 
+func MenuCariMahasiswa(Tabel IuranBulanan, NMahasiswa int, Nominal int) {
+
+	/*	Prosedur menu pencarian. Pengguna dapat memilih untuk mencari
+	 *	mahasiswa berdasarkan ID (Binary Search), berdasarkan Nama
+	 *	(Sequential Search), atau mencari mahasiswa dengan pembayaran
+	 *	ekstrim (Min/Max).
+	 *
+	 *	IS. Terdefinisi Tabel IuranBulanan, NMahasiswa, dan Nominal.
+	 *	FS. Menampilkan hasil pencarian sesuai metode yang dipilih.
+	 */
+
+	var pilihan, IdxHasil, IDTarget int
+	var NamaTarget string
+	var LoopInSrcMethod bool
+
+	if NMahasiswa == 0 {
+		fmt.Println("********* Database masih kosong *********")
+	} else if Nominal == 0 {
+		fmt.Println("****** Nominal Kas Belum Di-Setting *****")
+	} else {
+
+		fmt.Println("Pilih metode pencarian:")
+		fmt.Println("1. Cari berdasarkan ID (Binary Search)")
+		fmt.Println("2. Cari berdasarkan Nama (Sequential Search)")
+		fmt.Println("3. Cari Pembayaran Tertinggi/Terendah (Min/Max)")
+
+		LoopInSrcMethod = true
+
+		for LoopInSrcMethod {
+			fmt.Print("\nPilihan Anda: ")
+			fmt.Scan(&pilihan)
+
+			if pilihan < 1 || pilihan > 3 {
+				fmt.Println("Pilihan tidak valid")
+			} else {
+				LoopInSrcMethod = false
+			}
+		}
+
+		switch pilihan {
+		case 1:
+			fmt.Print("Masukkan ID yang dicari: ")
+			fmt.Scan(&IDTarget)
+			IdxHasil = CariBerdasarID(Tabel, NMahasiswa, IDTarget)
+			if IdxHasil == -1 {
+				fmt.Println("ID", IDTarget, "Tidak ditemukan")
+			} else {
+				TampilDataIndex(Tabel, IdxHasil, Nominal)
+			}
+		case 2:
+			fmt.Print("Masukkan Nama yang dicari (Tanpa Spasi): ")
+			fmt.Scan(&NamaTarget)
+			IdxHasil = CariBerdasarNama(Tabel, NMahasiswa, NamaTarget)
+			if IdxHasil == -1 {
+				fmt.Println("Nama", NamaTarget, "Tidak ditemukan")
+			} else {
+				TampilDataIndex(Tabel, IdxHasil, Nominal)
+			}
+		case 3:
+			CariEkstrim(Tabel, NMahasiswa, Nominal)
+		}
+	}
+}
+
 func CariBerdasarID(Tabel IuranBulanan, NMahasiswa, IDTarget int) int {
 
 	/*	Mencari indeks dari ID Target menggunakan algoritma binary search
@@ -401,9 +463,88 @@ func CariBerdasarID(Tabel IuranBulanan, NMahasiswa, IDTarget int) int {
 	return IndeksDicari
 }
 
-/*
- * wlm
- */
+func CariBerdasarNama(Tabel IuranBulanan, NMahasiswa int, NamaTarget string) int {
+
+	/*	Mencari indeks mahasiswa berdasarkan Nama menggunakan algoritma
+	 *	SEQUENTIAL SEARCH (linear search), dilakukan dari indeks pertama
+	 *	hingga ditemukan kecocokan nama atau mencapai akhir tabel.
+	 *
+	 *	IS. Terdefinisi Tabel IuranBulanan dan NMahasiswa.
+	 *	FS. Mengembalikan indeks mahasiswa dengan Nama yang cocok,
+	 *		atau -1 jika tidak ditemukan.
+	 */
+
+	var i int
+	var IndeksDicari int
+
+	i = 0
+	IndeksDicari = -1
+
+	for i < NMahasiswa && IndeksDicari == -1 {
+		if Tabel[i].Nama == NamaTarget {
+			IndeksDicari = i
+		}
+		i++
+	}
+
+	return IndeksDicari
+}
+
+func CariEkstrim(Tabel IuranBulanan, NMahasiswa int, Nominal int) {
+
+	/* 	Prosedur untuk menampilkan mahasiswa dengan pembayaran
+	 *	tertinggi (Max) dan terendah (Min).
+	 *
+	 *	IS. Terdefinisi Tabel IuranBulanan, NMahasiswa, dan Nominal.
+	 *	FS. Menampilkan dua Mahasiswa dengan pembayaran tertinggi dan terendah
+	 */
+
+	var i, IdxExt int
+
+	IdxExt = 0
+
+	// ALGORITMA FIND MAX (Paling Banyak Lunas)
+	for i = 1; i < NMahasiswa; i++ {
+		if HitungTotalBayar(Tabel[i].Tanggal) > HitungTotalBayar(Tabel[IdxExt].Tanggal) {
+			IdxExt = i
+		}
+	}
+
+	fmt.Println("\n>>> MAHASISWA DENGAN PEMBAYARAN TERTINGGI <<<")
+	TampilDataIndex(Tabel, IdxExt, Nominal)
+
+	// ALGORITMA FIND MIN (Paling Sedikit Lunas)
+	for i = 1; i < NMahasiswa; i++ {
+		if HitungTotalBayar(Tabel[i].Tanggal) < HitungTotalBayar(Tabel[IdxExt].Tanggal) {
+			IdxExt = i
+		}
+	}
+
+	fmt.Println("\n>>> MAHASISWA DENGAN PEMBAYARAN TERENDAH <<<")
+	TampilDataIndex(Tabel, IdxExt, Nominal)
+
+}
+
+func TampilDataIndex(Tabel IuranBulanan, Idx, Nominal int) {
+
+	/* 	Prosedur untuk menampilkan data pembayaran mahasiswa yang
+	 * 	berada dalam index tertentu
+	 *
+	 *	IS. Terdefinisi Tabel bertipe data IuranBulanan dan Idx (index mahasiswa)
+	 *
+	 *	FS. Menampilkan Data Pembayaran mahasiswa pada index Idx
+	 */
+
+	var TotalBayar int
+
+	TotalBayar = HitungTotalBayar(Tabel[Idx].Tanggal)
+
+	fmt.Printf("\n-------------------------------------------\n")
+	fmt.Printf("Nama\t\t: %s\n", Tabel[Idx].Nama)
+	fmt.Printf("ID\t\t: %d\n", Tabel[Idx].ID)
+	fmt.Printf("Total Bayar\t: %d, (%d Hari Lunas)\n", TotalBayar*Nominal, TotalBayar)
+	fmt.Printf("-------------------------------------------\n")
+}
 
 func BelumBayarPerTanggal(Tabel IuranBulanan, NMahasiswa int) {
 
@@ -498,8 +639,8 @@ func UrutkanLaporanByPembayaran(Tabel IuranBulanan, NMahasiswa int, SortedByID *
 	 *	IS. Terdefinisi Tabel bertipe IuranBulanan dan NMahasiswa.
 	 *
 	 *	FS. Tabel terurut (Ascending/Descending) berdasarkan total bayar.
-	 *	    Jika ada total yang sama, ID terkecil akan diutamakan.
-	 *	    Hasil akhir tercetak di layar.
+	 *	    Jika ada total yang sama, ID terkecil (Ascending) atau terbesar
+	 *		(Descending) didahulukan. Hasil akhir tercetak di layar.
 	 */
 
 	var pilihan, i int
@@ -528,7 +669,7 @@ func UrutkanLaporanByPembayaran(Tabel IuranBulanan, NMahasiswa int, SortedByID *
 			}
 		}
 
-		SelectionSortByPembayaran(&Tabel, NMahasiswa, pilihan)
+		SortingPembayaran(&Tabel, NMahasiswa, pilihan)
 		*SortedByID = false
 
 		// TAMPILKAN HASIL
@@ -554,97 +695,157 @@ func UrutkanLaporanByPembayaran(Tabel IuranBulanan, NMahasiswa int, SortedByID *
 
 }
 
-func SelectionSortByPembayaran(Tabel *IuranBulanan, NMahasiswa int, choice int) {
+func SortingPembayaran(Tabel *IuranBulanan, NMahasiswa int, choice int) {
 
-	/*
+	/* 	Prosedur untuk mengurutkan data mahasiswa berdasarkan total pembayaran
+	 *	sesuai pilihan yang dimasukkan pengguna.
+	 *	Jika pilihan = 1 (Ascending) maka data diurutkan dengan menggunakan
+	 *  algoritma SELECTION SORT, Jika pilihan = 2 (Descending) maka data
+	 *  diurutkan dengan menggunakan algoritma INSERTION SORT
 	 *
+	 *	IS. Terdefinisi Tabel bertipe IuranBulanan, NMahasiswa (jumlah mahasiswa),
+	 *		dan choice (pilihan Ascending/Descending
+	 *
+	 *	FS. Tabel terurut berdasarkan total bayar, secara ascending (pilihan = 1)
+	 *		atau descending (pilihan = 2)
 	 */
 
-	var i, j, Min, Max int
-	var TotalJ, TotalMin, TotalMax int
+	var i, j, Ext int
+	var TotalJ, TotalExt, TotalTemp int
 	var temp DataIuran
 
 	if choice == 1 {
 
+		// Pengurutan secara ascending dengan algoritma selection sort
+		// Jika ada total yg sama maka ID yg lebih besar didahulukan
+
 		for i = 0; i < NMahasiswa-1; i++ {
 
-			Min = i
-			TotalMin = HitungTotalBayar(Tabel[Min].Tanggal) // hitung berapa kali mhs pada indeks Min membayar
+			Ext = i
+			TotalExt = HitungTotalBayar(Tabel[Ext].Tanggal)
 
 			for j = i + 1; j < NMahasiswa; j++ {
 
-				TotalJ = HitungTotalBayar(Tabel[j].Tanggal) // hitung berapa kali mhs pada indeks j membayar
+				TotalJ = HitungTotalBayar(Tabel[j].Tanggal)
 
-				if TotalJ < TotalMin {
+				if TotalJ < TotalExt {
 
-					Min = j
-					TotalMin = HitungTotalBayar(Tabel[Min].Tanggal)
+					Ext = j
+					TotalExt = HitungTotalBayar(Tabel[Ext].Tanggal)
 
-				} else if TotalMin == TotalJ && Tabel[j].ID < Tabel[Min].ID { // Bila Total Sama, ID Yg lebih kecil dipilih
-
-					Min = j
-					TotalMin = HitungTotalBayar(Tabel[Min].Tanggal)
+				} else if TotalExt == TotalJ && Tabel[j].ID < Tabel[Ext].ID {
+					Ext = j
+					TotalExt = HitungTotalBayar(Tabel[Ext].Tanggal)
 
 				}
 
 			}
 
 			// Swapping
-			temp = Tabel[Min]
-			Tabel[Min] = Tabel[i]
+			temp = Tabel[Ext]
+			Tabel[Ext] = Tabel[i]
 			Tabel[i] = temp
 		}
 
 	} else {
 
-		for i = 0; i < NMahasiswa-1; i++ {
+		// Pengurutan secara descending dengan algoritma insertion sort
+		// Jika ada total yg sama maka ID yg lebih besar didahulukan
 
-			Max = i
-			TotalMax = HitungTotalBayar(Tabel[Max].Tanggal) // hitung berapa kali mhs pada indeks Max membayar
+		for i = 1; i < NMahasiswa; i++ {
 
-			for j = i + 1; j < NMahasiswa; j++ {
+			j = i
+			temp = Tabel[j]
+			TotalTemp = HitungTotalBayar(temp.Tanggal)
+			TotalJ = HitungTotalBayar(Tabel[j-1].Tanggal)
 
-				TotalJ = HitungTotalBayar(Tabel[j].Tanggal) // hitung berapa kali mhs pada indeks j membayar
+			for j > 0 && (TotalTemp > TotalJ || (TotalTemp == TotalJ && Tabel[j-1].ID > temp.ID)) {
 
-				if TotalJ < TotalMax {
+				Tabel[j] = Tabel[j-1]
+				j--
 
-					Max = j
-					TotalMax = HitungTotalBayar(Tabel[Max].Tanggal)
-
-				} else if TotalMax == TotalJ && Tabel[j].ID < Tabel[Max].ID { // Bila Total Sama, ID Yg lebih kecil dipilih
-
-					Max = j
-					TotalMax = HitungTotalBayar(Tabel[Max].Tanggal)
-
+				if j > 0 {
+					TotalJ = HitungTotalBayar(Tabel[j-1].Tanggal)
 				}
 
 			}
 
-			// Swapping
-			temp = Tabel[Max]
-			Tabel[Max] = Tabel[i]
-			Tabel[i] = temp
+			Tabel[j] = temp
 		}
 
 	}
-
 }
 
-func InsertionSortByID(Tabel *IuranBulanan, NMahasiswa int) {
-	var i, j int
-	var temp DataIuran
+func LaporanKeuangan(Tabel IuranBulanan, NMahasiswa int, Nominal int) {
 
-	for i = 1; i < NMahasiswa; i++ {
-		j = i
-		temp = Tabel[j]
-		for j > 1 && temp.ID < Tabel[j-1].ID {
-			Tabel[j] = Tabel[j-1]
-			j--
+	/*	Prosedur untuk menampilkan laporan keuangan kas kelas, berisi:
+	 *	1. Total per Tanggal: jumlah mahasiswa yang LUNAS pada setiap
+	 *		tanggal (1-31) beserta total uang masuk pada tanggal tersebut.
+	 *	2. Total Keseluruhan: total uang masuk dari seluruh mahasiswa pada
+	 *		seluruh tanggal.
+	 *
+	 *	IS.	Terdefinisi Tabel bertipe IuranBulanan, NMahasiswa, dan Nominal.
+	 *
+	 *	FS. Tercetak di layar tabel Total per Tanggal dan Total Keseluruhan.
+	 */
+
+	var tgl int
+	var JumlahLunas int
+	var TotalKeseluruhan int
+	var TglMin, TglMax int
+
+	if NMahasiswa == 0 {
+		fmt.Println("********* Database masih kosong *********")
+	} else if Nominal == 0 {
+		fmt.Println("****** Nominal Kas Belum Di-Setting *****")
+	} else {
+		fmt.Print("\n=========== Total Per Tanggal ===========\n")
+		fmt.Printf("| %-3v | %-13v | %-15v |\n", "Tgl", "Jml Lunas", "Total Masuk")
+		fmt.Print("-----------------------------------------\n")
+
+		TotalKeseluruhan = 0
+		TglMax = 1
+		TglMin = 1
+
+		for tgl = 1; tgl <= HARI; tgl++ {
+			JumlahLunas = JumlahLunasPerTanggal(Tabel, NMahasiswa, tgl)
+			fmt.Printf("| %-3d | %-13d | Rp %-12d |\n", tgl, JumlahLunas, JumlahLunas*Nominal)
+			TotalKeseluruhan += JumlahLunas * Nominal
+
+			if JumlahLunas > JumlahLunasPerTanggal(Tabel, NMahasiswa, TglMax) {
+				TglMax = tgl
+			}
+
+			if JumlahLunas < JumlahLunasPerTanggal(Tabel, NMahasiswa, TglMin) {
+				TglMin = tgl
+			}
 		}
-		Tabel[j] = temp
+
+		fmt.Print("-----------------------------------------\n")
+		fmt.Print("================ Summary ================\n")
+		fmt.Printf("Total Uang Kas Terkumpul:\n>> Rp %d\n", TotalKeseluruhan)
+		fmt.Print("-----------------------------------------\n")
 	}
 }
 
-func LaporanKeuangan(Tabel *IuranBulanan, NMahasiswa int) {
+func JumlahLunasPerTanggal(Tabel IuranBulanan, NMahasiswa int, Tanggal int) int {
 
+	/*	Fungsi untuk menghitung berapa banyak mahasiswa yang berstatus
+	 *	LUNAS pada satu tanggal tertentu.
+	 *
+	 *	IS. Terdefinisi Tabel bertipe IuranBulanan, NMahasiswa, dan Tanggal
+	 *		(rentang 1-31).
+	 *	FS. Mengembalikan jumlah mahasiswa LUNAS pada Tanggal tersebut.
+	 */
+
+	var i, Jumlah int
+
+	Jumlah = 0
+	for i = 0; i < NMahasiswa; i++ {
+		if Tabel[i].Tanggal[Tanggal-1] == "LUNAS" {
+			Jumlah++
+		}
+	}
+
+	return Jumlah
 }
