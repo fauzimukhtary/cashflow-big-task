@@ -811,14 +811,6 @@ func LaporanKeuangan(Tabel IuranBulanan, NMahasiswa int, Nominal int) {
 			JumlahLunas = JumlahLunasPerTanggal(Tabel, NMahasiswa, tgl)
 			fmt.Printf("| %-3d | %-13d | Rp %-12d |\n", tgl, JumlahLunas, JumlahLunas*Nominal)
 			TotalKeseluruhan += JumlahLunas * Nominal
-
-			if JumlahLunas > JumlahLunasPerTanggal(Tabel, NMahasiswa, TglMax) {
-				TglMax = tgl
-			}
-
-			if JumlahLunas < JumlahLunasPerTanggal(Tabel, NMahasiswa, TglMin) {
-				TglMin = tgl
-			}
 		}
 
 		fmt.Print("-----------------------------------------\n")
