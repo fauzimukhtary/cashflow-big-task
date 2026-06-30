@@ -154,7 +154,7 @@ func TambahData(Tabel *IuranBulanan, NMahasiswa *int, NTerhapus int) {
 	var TMPNama string
 
 	fmt.Print("Masukkan Nama Mahasiswa Baru (Tanpa Spasi): ")
-	fmt.Scan(TMPNama)
+	fmt.Scan(&TMPNama)
 
 	Tabel[*NMahasiswa].Nama = TMPNama
 	Tabel[*NMahasiswa].ID = *NMahasiswa + NTerhapus + 1
